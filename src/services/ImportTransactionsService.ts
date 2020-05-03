@@ -2,8 +2,6 @@ import csvParse from 'csv-parse';
 import fs from 'fs';
 import path from 'path';
 
-import Transaction from '../models/Transaction';
-
 interface Request {
   fileName: string;
 }

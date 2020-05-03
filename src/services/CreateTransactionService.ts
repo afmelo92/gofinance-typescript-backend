@@ -1,5 +1,5 @@
 import { getCustomRepository } from 'typeorm';
-// import AppError from '../errors/AppError';
+import AppError from '../errors/AppError';
 
 import Transaction from '../models/Transaction';
 import TransactionsRepository from '../repositories/TransactionsRepository';
@@ -25,7 +25,7 @@ class CreateTransactionService {
     const balance = await transactionsRepository.getBalance();
 
     if (type === 'outcome' && value > balance.total) {
-      throw Error(
+      throw new AppError(
         'This transaction cannot be made. Check your balance, please.',
       );
     }

@@ -12,82 +12,66 @@ const transactionsRouter = Router();
 const upload = multer(uploadConfig);
 
 transactionsRouter.get('/', async (request, response) => {
-  try {
-    const transactionsRepository = getCustomRepository(TransactionsRepository);
+  const transactionsRepository = getCustomRepository(TransactionsRepository);
 
-    const transactions = await transactionsRepository.find({
-      select: ['id', 'title', 'value', 'created_at', 'updated_at'],
-      relations: ['category_id'],
-    });
-    const balance = await transactionsRepository.getBalance();
+  const transactions = await transactionsRepository.find({
+    select: ['id', 'title', 'value', 'created_at', 'updated_at'],
+    relations: ['category_id'],
+  });
+  const balance = await transactionsRepository.getBalance();
 
-    return response.json({ transactions, balance });
-  } catch (err) {
-    return response.status(400).json({ error: err.message });
-  }
+  return response.json({ transactions, balance });
 });
 
 transactionsRouter.post('/', async (request, response) => {
-  try {
-    const { title, value, type, category } = request.body;
+  const { title, value, type, category } = request.body;
 
-    const createTransaction = new CreateTransactionService();
+  const createTransaction = new CreateTransactionService();
 
-    const transaction = await createTransaction.execute({
-      title,
-      value,
-      type,
-      category,
-    });
+  const transaction = await createTransaction.execute({
+    title,
+    value,
+    type,
+    category,
+  });
 
-    return response.json(transaction);
-  } catch (error) {
-    return response.status(400).json({ error: error.message });
-  }
+  return response.json(transaction);
 });
 
 transactionsRouter.delete('/:id', async (request, response) => {
-  try {
-    const { id } = request.params;
+  const { id } = request.params;
 
-    const deleteTransaction = new DeleteTransactionService();
+  const deleteTransaction = new DeleteTransactionService();
 
-    deleteTransaction.execute({ id });
+  deleteTransaction.execute({ id });
 
-    return response.json({ id });
-  } catch (error) {
-    return response.status(400).json({ error: error.message });
-  }
+  return response.json({ id });
 });
 
 transactionsRouter.post(
   '/import',
   upload.single('sheet'),
   async (request, response) => {
-    try {
-      const importTransactionService = new ImportTransactionsService();
+    const importTransactionService = new ImportTransactionsService();
 
-      const fileContent = await importTransactionService.execute({
-        fileName: request.file.filename,
+    const fileContent = await importTransactionService.execute({
+      fileName: request.file.filename,
+    });
+
+    const createTransaction = new CreateTransactionService();
+
+    fileContent.forEach(item => {
+      const { title, value, type, category } = item;
+      createTransaction.execute({
+        title,
+        value,
+        type,
+        category,
       });
+    });
 
-      const createTransaction = new CreateTransactionService();
-
-      fileContent.forEach(item => {
-        const { title, value, type, category } = item;
-        createTransaction.execute({
-          title,
-          value,
-          type,
-          category,
-        });
-      });
-
-      // return response.json(user);
-      return response.json(fileContent);
-    } catch (error) {
-      return response.status(400).json({ error: error.message });
-    }
+    // return response.json(user);
+    return response.json(fileContent);
   },
 );
 
